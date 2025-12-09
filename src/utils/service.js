@@ -59,7 +59,7 @@ export const signAttendance = (specialId, studentData) => service.post(`/attenda
 
 export const getAttendances = (specialId) => service.get(`/attendance/${specialId}`, { withCredentials: true }); 
 
-export const sendOTP = (email) => service.post('/otp/send', { email }, { withCredentials: true });
+export const sendOTP = (obj) => service.post('/otp/send', { ...obj }, { withCredentials: true });
 
 export const verIfyOTP = (otp) => service.post('/otp/verify', { otp }, { withCredentials: true });
 
@@ -78,6 +78,8 @@ export const initiatePayment = (payload) => service.post('/payment/payment-inten
 export const checkOnline = () => service.get('/isOnline', { withCredentials: true });
 
 export const getSubTimestamp = () => service.get('/subscription', { withCredentials: true });
+
+export const regLocal = (payload) => service.post('/re-register/local', { ...payload }, {withCredentials: true})
 
 export const getUserProfile = () => {
     return service.get('/auth/profile')

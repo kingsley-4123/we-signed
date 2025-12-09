@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAlert } from "../components/AlertContext";
 import { useNavigate } from "react-router-dom";
 import { getAllData, deleteData, putData } from "../utils/db";
-import { reRegister } from "../utils/service";
+import { reRegister, sendOTP } from "../utils/service";
 import { motion, AnimatePresence } from 'framer-motion';
 import PasswordInput from '../components/PasswordComponent.jsx';
 import { encryptText } from '../utils/cryptoUtils.js';
@@ -20,6 +20,10 @@ export default function Reregistration() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [showOtpInput, setShowOtpInput] = useState(false);
+    const [otp, setOtp] = useState(Array(6).fill(''));
+    const refs = useRef([]);
+    const [inputRefs, setInputRefs] = useState([]);
     
     const { showAlert } = useAlert();
     const navigate = useNavigate();
@@ -27,6 +31,18 @@ export default function Reregistration() {
     useEffect(() => {
         showAlert("Please know that this feature is only recommended if you lost your email because it will take 12hours for the new account to be activated. This is to prevent impersonation.", "info", { closable: true });
     }, []);
+
+
+    useEffect(() => {
+    // keep refs array length in sync with otp length
+    setInputRefs((r) => {
+      const arr = Array(otp.length)
+        .fill()
+        .map((_, i) => r[i] || React.createRef());
+      refs.current = arr;
+      return arr;
+    });
+  }, [otp.length]);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -51,38 +67,110 @@ export default function Reregistration() {
                 return;
             }
 
-                
-            const payload = { firstname, middlename, surname, email, password, school };
-            const reRegRes = await reRegister(payload);
-
-            if (reRegRes.data.ok) {
-                const userId = reRegRes.data.userId;
-                const encryptedUserId = await encryptText(userId);
-                const encryptedPassword = await encryptText(password);
-                payload.password = encryptedPassword;
-                payload.userId = encryptedUserId;
-                const user = payload;
-                console.log("Payload", payload);
-                console.log("User", user);
-                await putData('pendingUser', { ...user, createdAt: Date.now(), status: "pending" });
-                setSuccess(true);
-                showAlert(reRegRes.data.message, 'success');
-                setTimeout(() => {
-                    navigate('/');
-                }, 1500);
-            } else {
-                setError('Registration failed!');
+            const subject = 'WeSigned Account re-registration - Email verification';
+            const type = 'reReg';
+            const payload = { email, type, subject };
+            const res = await sendOTP(payload);
+            if (!res?.data?.ok) {
+            showAlert(res?.data?.message || 'Failed to send OTP', 'error');
+            setLoading(false);
+            return;
             }
-
+            showAlert('OTP sent. Enter it to complete registration.', 'success');
+            setShowOtpInput(true);
         } catch (err) {
             console.error("ERROR", err.response ? err.response.data : err);
             if (err.response) showAlert(err.response.data.message, 'warning');
+            setLoading(false);
         }
             
         setLoading(false);
+        setError('');
+    };
+
+
+    const handleOTPChange = (value, index) => {
+    if (!/^\d?$/.test(value)) return; // only allow single digit numbers
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // focus next
+    if (value && index < otp.length - 1) {
+      refs.current[index + 1].current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      refs.current[index - 1].current?.focus();
+    }
+    // allow left/right arrow navigation
+    if (e.key === 'ArrowLeft' && index > 0) {
+      refs.current[index - 1].current?.focus();
+    }
+    if (e.key === 'ArrowRight' && index < otp.length - 1) {
+      refs.current[index + 1].current?.focus();
+    }
+  };
+
+  const clearOtp = () => {
+    setOtp(Array(6).fill(''));
+    refs.current[0]?.current?.focus();
+  };
+
+
+
+    const handleVerifyOtp = async () => {
+        setLoading(true);
+        try {
+            const otpValue = otp.join("");
+            console.log(`OTP: ${otpValue}`);
+            const res = await verIfyOTP(otpValue);
+            console.log(res);
+            if (res.data.success) {
+                const { firstname, middlename, surname, email, password, school } = form;
+                const payload = { firstname, middlename, surname, email, password, school };
+                const reRegRes = await reRegister(payload);
+
+                if (reRegRes.data.ok) {
+                    const userId = reRegRes.data.userId;
+                    const encryptedUserId = await encryptText(userId);
+                    const encryptedPassword = await encryptText(password);
+                    payload.password = encryptedPassword;
+                    payload.userId = encryptedUserId;
+                    const user = payload;
+                    console.log("Payload", payload);
+                    console.log("User", user);
+                    await putData('pendingUser', { ...user, createdAt: Date.now(), status: "pending" });
+                    setSuccess(true);
+                    showAlert(reRegRes.data.message, 'success');
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 1500);
+                } else {
+                    setError('Registration failed!');
+                    setLoading(false);
+                }   
+            } else {
+                showAlert(res.data.message, 'error');
+                setLoading(false);
+          }
+        } catch (err) {
+          if (err.response) {
+            showAlert(err.response.data.message, 'error');
+            setLoading(false); 
+          }
+        }
+        clearOtp();
+        setError('');
+        setShowOtpInput(false);
+        setOtp(Array(6).fill(""));
         setForm({ firstname: '', middlename: '', surname: '', email: '', password: '', school: '' });
         setConfirmPassword('');
+        setLoading(false);
     };
+    
 
 
     const fadeIn = {
@@ -253,6 +341,61 @@ export default function Reregistration() {
                     </motion.button>
                 </motion.form>
             </motion.div>
+
+            <AnimatePresence>
+                {(showOtpInput) && (
+                    <>
+                        <motion.div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+
+                        <motion.div
+                        className="fixed z-50 top-1/2 left-1/2 bg-white rounded-2xl shadow-lg p-4 sm:p-6 w-11/12 max-w-xs sm:max-w-sm text-center transform -translate-x-1/2 -translate-y-1/2"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                        >
+                        {loading && (
+                            <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-2xl z-50">
+                            <Spinner />
+                            </div>
+                        )}
+
+                        <h2 className="text-lg font-semibold mb-2">Having issues logging in?</h2>
+
+                        {/* Multi-digit OTP Input */}
+                            <p className="text-sm text-gray-600 mb-2">Enter the 6-digit code sent to <span className="font-medium">{form.email}</span></p>
+                            <div className="flex justify-center gap-2 mb-4">
+                                {otp.map((digit, index) => (
+                                    <input
+                                    key={index}
+                                    ref={(el) => {
+                                        if (!refs.current[index]) refs.current[index] = React.createRef();
+                                        refs.current[index].current = el;
+                                    }}
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        maxLength="1"
+                                        value={digit}
+                                        onChange={(e) => handleOTPChange(e.target.value.replace(/\D/g, ''), index)}
+                                        onKeyDown={(e) => handleKeyDown(e, index)}
+                                        className="w-8 h-10 sm:w-10 sm:h-12 border rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
+                                ))}
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button onClick={handleVerifyOtp} disabled={loading} className="flex-1 bg-gradient-to-r from-[#273c72] to-[#94c04c] hover:from-[#23376b] hover:to-[#669b11] transition-all mt-2 font-semibold text-white px-4 py-2 rounded-lg hover:cursor-pointer text-base sm:text-lg">
+                                    Verify Code
+                                </button>
+                                <button onClick={handleResendOtp} disabled={loading} className="flex-1 border rounded-lg mt-2 px-4 py-2">
+                                    Resend
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     
     );
