@@ -133,7 +133,7 @@ function AuthForm() {
         console.error('SIGNUP_PREP_ERROR', err);
         if (err?.response?.data?.message) showAlert(err.response.data.message, 'error');
       } finally {
-        setLoading(false);
+        setLoading2(false);
       }
     } else {
       // login validation
