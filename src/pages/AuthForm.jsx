@@ -330,6 +330,7 @@ function AuthForm() {
           if (err?.response?.data?.message) showAlert(err.response.data.message, 'error');
         } finally {
           setPendingAction(null);
+          setShowFallback(false);
           setShowOtpInput(false);
           clearOtp();
           setLoading(false);
