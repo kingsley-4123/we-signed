@@ -17,8 +17,6 @@ export default function TimerPage() {
     createdAt,
   } = attSession || {};
 
-  console.log("SESSION_SPECIALID:", special_id, "SESSION_LECTURER:", lecturer);
-
   if (!special_id) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -28,6 +26,12 @@ export default function TimerPage() {
       </div>
     );
   }
+
+  useEffect(() => {
+    console.log("SESSION_SPECIALID:", special_id, "SESSION_LECTURER:", lecturer);
+
+    return () => localStorage.removeItem("latestSessionObj");
+  }, []);
 
   // 🔹 Convert duration into seconds based on unit
   const safeDuration = Number(duration) || 0;
@@ -118,17 +122,12 @@ export default function TimerPage() {
         date,
       };
 
-      localStorage.removeItem("latestSessionObj");
-      const storedData = JSON.parse(localStorage.getItem("latestAttendanceObj"));
-      if (storedData) localStorage.removeItem("latestAttendanceObj");
       localStorage.setItem("latestAttendanceObj", JSON.stringify(timerData));
       navigate("/dashboard/lecturer");
     } catch (err) {
       console.error(err.response ? err.response.data : err);
-      if (err.response) {
-        showAlert(err.response.data.message, "error");
-        return;
-      }
+      if (err.response) showAlert(err.response.data.message, "error");
+      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     }
   };
 

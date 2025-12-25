@@ -108,10 +108,11 @@ export default function AttendancePage() {
         setError("Invalid attendance session.");
       }
     } catch (err) {
-      console.error(err.response ? err.response.data : err);
+      console.error("Error fetching attendance session:", err);
       setError(
         err.response?.data?.message || "Attendance session not found."
       );
+      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     } finally {
       setLoading(false);
     }
@@ -160,6 +161,7 @@ export default function AttendancePage() {
     } catch (err) {
       console.error(err);
       if(err.response) return showAlert(err.response.data.message, "error");
+      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     } finally {
       setLoading(false);
       setSuccess(false);

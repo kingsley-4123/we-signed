@@ -36,6 +36,16 @@ export default function AttendanceTablePage() {
   const { showAlert } = useAlert();
 
   useEffect(() => {
+    console.log("Component up and running...");
+
+    return () => {
+      if (savedLecturePageData) localStorage.removeItem("offlineAttendanceObj");
+
+      localStorage.removeItem('latestAttendanceObj');
+    };
+  }, []);
+
+  useEffect(() => {
     async function saveAttendance() {
       if (attendance_name && lecturer && date && special_id) {
         const randomGradient = getRandomGradient();
@@ -79,6 +89,7 @@ export default function AttendanceTablePage() {
       } catch (err) {
         console.error(err.response ? err.response.data : err);
         if (err.response) showAlert(err.response.data.message, "error");
+        err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
       } finally {
         setIsLoading(false);
       }
@@ -142,8 +153,9 @@ export default function AttendanceTablePage() {
         window.URL.revokeObjectURL(url);
       }
     } catch (err) {
-      showAlert("❌ Download failed. Please try again.", "error");
       console.error(err);
+      showAlert("❌ Download failed. Please try again.", "error");
+      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     } finally {
       setLoadingFile(null);
     }

@@ -82,6 +82,7 @@ export default function AttendanceSession() {
       console.error("Error creating session:", err.response ? err.response.data : err);
       if(err.response){
         showAlert(err.response.data.message, 'error');
+        err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
         setSuccess(false);
         setLoading(false);
       }

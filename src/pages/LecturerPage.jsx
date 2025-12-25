@@ -55,7 +55,6 @@ export default function LecturerPage() {
             <Link
               to={`/dashboard/lecturer`}
               onClick={() => {
-                localStorage.removeItem("offlineAttendanceObj");
                 localStorage.setItem("offlineAttendanceObj", JSON.stringify(att));
               }}
               className="block"

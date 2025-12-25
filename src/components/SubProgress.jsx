@@ -30,8 +30,7 @@ export default function SubProgress() {
             } catch (err) {
                 setStartDate(0);
                 setTotal(0);
-                if(err.response) showAlert(err.response.data.message, "warning");
-                console.error(err.response ? err.response.data : err);
+                if(err.response) console.error(err.response ? err.response.data : err);
             }
         }
         getTimestamps();
