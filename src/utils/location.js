@@ -14,7 +14,7 @@ function getCurrentLocation() {
                     reject(error);
                 },
                 {
-                    enableHighAccuracy: true,
+                    timeout: 20000,
                     maximumAge: 0
                 }
             );

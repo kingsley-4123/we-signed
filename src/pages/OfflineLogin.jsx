@@ -5,6 +5,7 @@ import { useAlert } from "../components/AlertContext";
 import { useNavigate } from "react-router-dom"; 
 import { decryptText } from "../utils/cryptoUtils";
 import PasswordInput from "../components/PasswordComponent";
+import updateLocalStorage from "../utils/localStorage.js";
 
 export default function OfflineLoginPage() {
     const [error, setError] = useState('');
@@ -49,7 +50,7 @@ export default function OfflineLoginPage() {
         }
         setSuccess(true);
         setError('');
-        localStorage.setItem('offlineUserEmail', JSON.stringify(email));
+        updateLocalStorage('offlineUserEmail', JSON.stringify(email));
         setTimeout(() => {
             navigate('/offline-header/component-offline');
         }, 1000);

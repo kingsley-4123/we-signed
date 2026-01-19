@@ -35,16 +35,7 @@ export default function AttendanceTablePage() {
   const navigate = useNavigate();
   const { showAlert } = useAlert();
 
-  useEffect(() => {
-    console.log("Component up and running...");
-
-    return () => {
-      if (savedLecturePageData) localStorage.removeItem("offlineAttendanceObj");
-
-      localStorage.removeItem('latestAttendanceObj');
-    };
-  }, []);
-
+ 
   useEffect(() => {
     async function saveAttendance() {
       if (attendance_name && lecturer && date && special_id) {
@@ -74,8 +65,10 @@ export default function AttendanceTablePage() {
         let res;
         if (reViewStatus === "offline") {
           res = await getSyncedAttendance(reViewId, reViewName);
-        } else {
+        } else if(reViewStatus === "online") {
           res = await getAttendances(reViewId);
+        } else {
+          console.log('RECENT RECORD', attendance);
         }
         console.log("FETCHED RES", res);
 
@@ -88,8 +81,8 @@ export default function AttendanceTablePage() {
         setIsAttendance(true);
       } catch (err) {
         console.error(err.response ? err.response.data : err);
-        if (err.response) showAlert(err.response.data.message, "error");
-        err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
+        if (err.response) showAlert(err.response?.data?.message, "error");
+        err.response?.data?.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
       } finally {
         setIsLoading(false);
       }
@@ -105,8 +98,8 @@ export default function AttendanceTablePage() {
 
       if (reViewStatus === "offline") {
         const exportRes = await exportOfflineAttendance(type, reViewId, reViewName);
-        blobData = new Blob([res.data], {
-          type: res.headers["content-type"],
+        blobData = new Blob([exportRes.data], {
+          type: exportRes.headers["content-type"],
         });
         fileName = `${reViewName}.${type}`;
         const disposition = exportRes.headers["content-disposition"];
@@ -155,7 +148,7 @@ export default function AttendanceTablePage() {
     } catch (err) {
       console.error(err);
       showAlert("❌ Download failed. Please try again.", "error");
-      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
+      err.response?.data?.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     } finally {
       setLoadingFile(null);
     }
@@ -174,8 +167,6 @@ export default function AttendanceTablePage() {
         {/* Go Back Button */}
         <motion.button
           onClick={() => {
-            localStorage.removeItem("latestAttendanceObj");
-            localStorage.removeItem("offlineAttendanceObj");
             navigate(-1);
           }}
           whileTap={{ scale: 0.95 }}

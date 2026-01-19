@@ -15,8 +15,6 @@ export default function StudentPage() {
   // Load attendances from IndexedDB
   useEffect(() => {
     getAllData("studentAttendances").then(setAttendances);
-
-    return () => localStorage.removeItem("studentAttendanceObj");
   }, []);
 
   // Add a new attendance with random gradient

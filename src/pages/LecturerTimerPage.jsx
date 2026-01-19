@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getAttendances } from "../utils/service.js";
 import { useAlert } from "../components/AlertContext.jsx";
+import updateLocalStorage from "../utils/localStorage.js";
 
 export default function TimerPage() {
   const savedSessionData = JSON.parse(localStorage.getItem("latestSessionObj"));
@@ -27,12 +28,6 @@ export default function TimerPage() {
     );
   }
 
-  useEffect(() => {
-    console.log("SESSION_SPECIALID:", special_id, "SESSION_LECTURER:", lecturer);
-
-    return () => localStorage.removeItem("latestSessionObj");
-  }, []);
-
   // 🔹 Convert duration into seconds based on unit
   const safeDuration = Number(duration) || 0;
   const durationInSeconds = useMemo(() => {
@@ -51,26 +46,28 @@ export default function TimerPage() {
     const createdAtTime = Number(createdAt);
     if (isNaN(createdAtTime)) return 0;
     return Math.floor((Date.now() - createdAtTime) / 1000);
-  })
-  
-  const initialTimeLeft = Math.max(durationInSeconds - elapsedTimeInSeconds, 0);
+  }, [createdAt]);
 
-  const [timeLeft, setTimeLeft] = useState(initialTimeLeft);
-  const [isFinished, setIsFinished] = useState(initialTimeLeft <= 0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
+  
+  useEffect(() => {
+    const remaining = Math.max(durationInSeconds - elapsedTimeInSeconds, 0);
+    setTimeLeft(remaining);
+    setIsFinished(remaining <= 0);
+  }, [durationInSeconds, elapsedTimeInSeconds]);
+
+  
   const navigate = useNavigate();
   const { showAlert } = useAlert();
 
   // 🔹 Countdown logic (stable, even on refresh)
   useEffect(() => {
-    if (timeLeft <= 0) {
-      setIsFinished(true);
-      return;
-    }
+    if (isFinished) return;
 
     const interval = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          clearInterval(interval);
           setIsFinished(true);
           return 0;
         }
@@ -79,7 +76,7 @@ export default function TimerPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timeLeft]);
+  }, [isFinished]);
 
   // 🔹 Percentage left (for circle progress)
   const percentage = (timeLeft / durationInSeconds) * 100;
@@ -122,12 +119,12 @@ export default function TimerPage() {
         date,
       };
 
-      localStorage.setItem("latestAttendanceObj", JSON.stringify(timerData));
+      updateLocalStorage("latestAttendanceObj", JSON.stringify(timerData));
       navigate("/dashboard/lecturer");
     } catch (err) {
       console.error(err.response ? err.response.data : err);
-      if (err.response) showAlert(err.response.data.message, "error");
-      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
+      if (err.response) showAlert(err.response?.data?.message, "error");
+      err.response?.data?.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     }
   };
 

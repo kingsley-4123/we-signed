@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import FlippingNumber from "../components/FlippingNumber";
 import { FaSearch } from "react-icons/fa";
 import { useAlert } from "../components/AlertContext.jsx";
+import updateLocalStorage from "../utils/localStorage.js";
 
 export default function AttendancePage() {
 
@@ -112,7 +113,7 @@ export default function AttendancePage() {
       setError(
         err.response?.data?.message || "Attendance session not found."
       );
-      err.response.data.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
+      err.response?.data?.message === 'Subscribe' ? navigate('/dashboard/subscription') : null;
     } finally {
       setLoading(false);
     }
@@ -147,10 +148,8 @@ export default function AttendancePage() {
       }
       console.log("Signed attendance:", res.data);
       const { title, lecturer, date } = res.data.student;
-      localStorage.setItem(
-        "studentAttendanceObj",
-        JSON.stringify({ title, lecturer, date })
-      );
+      
+      updateLocalStorage("studentAttendanceObj", JSON.stringify({ title, lecturer, date }));
       setSuccess(true);
 
       navigate("/dashboard/student");

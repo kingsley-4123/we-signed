@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FaClock, FaRulerCombined, FaCheck } from "react-icons/fa";
 import { useAlert } from "../components/AlertContext.jsx";
+import updateLocalStorage from "../utils/localStorage.js";
 
 export default function AttendanceSession() {
   const [duration, setDuration] = useState("1"); // 1–10 or "custom"
@@ -75,7 +76,7 @@ export default function AttendanceSession() {
       setSuccess(true);
       setLoading(false);
       showAlert(`Your Attendance Session ID is ${attSession.special_id}. Share it with your students.`, 'info', {closable: true});
-      localStorage.setItem('latestSessionObj', JSON.stringify(attSessionObj));
+      updateLocalStorage('latestSessionObj', JSON.stringify(attSessionObj));
       navigate("/dashboard/lecturer/timer");  
      
     } catch (err) {

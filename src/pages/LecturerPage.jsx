@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { FaTrash } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { putData, getAllData, deleteData } from "../utils/db.js";
-import {useAlert} from "../components/AlertContext.jsx"
+import { useAlert } from "../components/AlertContext.jsx";
+import updateLocalStorage from "../utils/localStorage.js";
 
 
 export default function LecturerPage() {
@@ -55,7 +56,7 @@ export default function LecturerPage() {
             <Link
               to={`/dashboard/lecturer`}
               onClick={() => {
-                localStorage.setItem("offlineAttendanceObj", JSON.stringify(att));
+                updateLocalStorage("offlineAttendanceObj", JSON.stringify(att))
               }}
               className="block"
             >
