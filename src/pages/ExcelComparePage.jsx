@@ -45,7 +45,7 @@ function ExcelComparePage() {
         // Find columns for name and reg no (case-insensitive)
         const header = json[0].map(h => h.toString().toLowerCase());
         const nameIdx = header.findIndex(h => h.includes('name'));
-        const regIdx = header.findIndex(h => h.includes('reg'));
+        const regIdx = header.findIndex(h => h.includes('reg') || h.includes('matric') || h.includes('id'));
         if (nameIdx === -1 || regIdx === -1) continue;
         for (let i = 1; i < json.length; i++) {
           const row = json[i];

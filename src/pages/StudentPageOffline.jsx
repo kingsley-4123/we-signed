@@ -70,7 +70,7 @@ export default function Student() {
         html5QrCodeRef.current = new Html5Qrcode(qrRegionId);
       }
       html5QrCodeRef.current.start(
-        { facingMode: "environment" },
+        { facingMode: { ideal: "environment" } },
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
@@ -85,10 +85,11 @@ export default function Student() {
             html5QrCodeRef.current && html5QrCodeRef.current.stop();
           } catch (e) {
             alert("Invalid QR code data");
+            console.log("Error parsing QR code:", e);
           }
         },
         (errorMessage) => {
-          // Optionally handle scan errors
+          console.log("QR code scan error:", errorMessage);
         }
       );
     } else if (html5QrCodeRef.current) {
